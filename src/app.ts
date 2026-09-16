@@ -7,6 +7,7 @@ import { notFoundHandler, errorHandler } from './middleware/errorHandler';
 import { multerErrorHandler } from './middleware/upload';
 
 import statusRoutes from './routes/status.routes';
+import uploadsRoutes from './routes/uploads.routes';
 import authRoutes from './routes/auth.routes';
 import userRoutes from './routes/user.routes';
 import kycRoutes from './routes/kyc.routes';
@@ -25,6 +26,7 @@ import notificationRoutes from './routes/notifications.routes';
 import charityRoutes from './routes/charity.routes';
 import cryptoRoutes from './routes/crypto.routes';
 import entertainmentRoutes from './routes/entertainment.routes';
+import chatRoutes from './routes/chat.routes';
 import miscRoutes from './routes/misc.routes';
 
 export const app = express();
@@ -40,6 +42,10 @@ if (env.nodeEnv !== 'test') {
 // Infra health check (load balancer / uptime probe) — NOT the "Health Services"
 // (doctors/patients) product domain, which lives under /api/health below.
 app.use('/health', statusRoutes);
+
+// Resolves the `${API_BASE_URL}/uploads/<stored value>` links both frontends
+// build for document previews and downloads. See uploads.routes.ts.
+app.use('/uploads', uploadsRoutes);
 
 // Every domain router below declares its own full path (including the leading
 // segment, e.g. `/auth/register`, `/admin/loans`) and is mounted at /api, since
@@ -63,6 +69,7 @@ app.use('/api', notificationRoutes);
 app.use('/api', charityRoutes);
 app.use('/api', cryptoRoutes);
 app.use('/api', entertainmentRoutes);
+app.use('/api', chatRoutes);
 app.use('/api', miscRoutes);
 
 app.use(multerErrorHandler);

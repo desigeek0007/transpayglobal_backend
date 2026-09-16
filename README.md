@@ -27,8 +27,8 @@ frontend's `*Record` types exactly — the shared table is an implementation det
 something the API surface exposes.
 
 Auth/users, KYC (its own table — richer status/step logic than a generic form), the wallet
-ledger (`payments`), and the admin cross-domain views (`/api/admin/users`,
-`/api/admin/dashboard/activities`) are bespoke.
+ledger (`payments`), the support chat (`chat_messages`), and the admin cross-domain views
+(`/api/admin/users`, `/api/admin/dashboard/activities`) are bespoke.
 
 ```
 src/
@@ -43,7 +43,9 @@ scripts/
   migrate.ts     applies supabase/migrations/*.sql via a direct Postgres connection
   seed.ts        creates/promotes a first admin account
 supabase/
-  migrations/0001_init.sql   full schema: users, kyc_records, applications, payments, form_submissions
+  migrations/0001_init.sql   base schema: users, kyc_records, applications, payments, form_submissions
+  migrations/0002_kyc_payment_and_chat.sql
+                             kyc_records.payment_screenshot_url + the chat_messages table
 ```
 
 ## Setup
@@ -108,11 +110,31 @@ supabase/
   `form_submissions` table instead, with an admin-only `GET
   /api/admin/notifications/form-submissions` to actually see them — the minimal
   substitute for the documented "notify admin" behavior.
-- **`payments` (wallet ledger) has no documented creation endpoint** in the frontend
-  contract — only list/update/delete. `PUT /api/admin/payments/:id` implements the real
-  balance math (credit/debit against `users.balance`) when a payment transitions to
-  `completed`, but nothing currently inserts rows into that table. Wire up a creator
-  (e.g. a referral-bonus credit, or a manual admin adjustment) if/when that UI exists.
+- **The KYC flow is 4 steps, not 5.** `GET /api/kyc/steps` returns exactly
+  `1 Personal Information / 2 Identity Verification / 3 Payment / 4 Final Review`, in that
+  order. Both frontends address steps by number *and* by array index (the dashboard
+  progress cards hard-code `steps[0..3]` to those four titles), so adding, removing or
+  reordering an entry silently mislabels the user's progress. `POST /api/kyc/save` is the
+  single write endpoint behind all of them, and it accepts three file fields:
+  `idDocument`, `proofOfAddress` and `paymentScreenshot`.
+- **Every KYC payload goes out through `toKycDTO`.** The wizard rehydrates itself from
+  `GET /api/kyc/status` and decides which steps are already done from `idDocument` /
+  `paymentScreenshot`; the admin screens drive their approve/reject buttons off `kyc.id`.
+  Trimming those fields out of any KYC response makes saved work look missing.
+- **`payments` (wallet ledger) rows are created by `POST /api/payments/credit`** — the
+  "Credit Balance" modal, where a user uploads a screenshot of an off-platform transfer.
+  The row lands `pending`/`pending` and does not touch `users.balance`;
+  `PUT /api/admin/payments/:id` holds the real balance math and applies it when an admin
+  moves the payment to `completed`.
+- **`GET /uploads/*` is a resolver, not a static directory.** Files live in private
+  Supabase Storage, but both frontends build document links as
+  `${API_BASE_URL}/uploads/<stored value>`. That route redirects to the stored signed URL
+  (or signs a `bucket/path` on the spot), which is what makes previews and admin downloads
+  work without touching frontend code.
+- **Support chat is admin-answered, not model-answered.** `role: 'user'` is the visitor,
+  `role: 'assistant'` is an admin replying via `POST /api/admin/chat-response`. A
+  conversation is keyed by `user_id` for a logged-in user and by the contact-form email for
+  a guest, so `/api/chat` and `/api/chat/messages` use `optionalAuth`.
 - **RLS is enabled with no permissive policies** on every table. Only this backend's
   secret key can read/write; the publishable (anon) key sees nothing. This was verified
   directly against the live project during setup.

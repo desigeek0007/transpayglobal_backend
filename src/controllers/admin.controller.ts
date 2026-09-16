@@ -2,7 +2,7 @@ import { Response } from 'express';
 import { supabase } from '../config/supabase';
 import { ApiError } from '../utils/ApiError';
 import { asyncHandler } from '../utils/asyncHandler';
-import { toUserDTO } from '../utils/mappers';
+import { toUserDTO, toKycDTO, toReferralUserDTO, toPaymentDTO } from '../utils/mappers';
 import { flattenApplication, ApplicationType } from '../services/applications.service';
 import { AuthedRequest } from '../middleware/auth';
 
@@ -50,11 +50,13 @@ export const adminListUsers = asyncHandler(async (req: AuthedRequest, res: Respo
   res.json({
     users: (users || []).map((u) => {
       const kyc = kycByUser.get(u.id);
+      // The admin KYC screen (app/admin/kyc-user) drives its approve/reject
+      // buttons off `kyc.id` and renders the document download links off
+      // `kyc.idDocument` / `kyc.proofOfAddress` / `kyc.paymentScreenshot`, so
+      // the whole record goes out here, not just the status summary.
       return {
         ...toUserDTO(u),
-        kyc: kyc
-          ? { status: kyc.status, paymentStatus: kyc.payment_status, submittedAt: kyc.submitted_at }
-          : null,
+        kyc: toKycDTO(kyc),
       };
     }),
     total,
@@ -85,24 +87,12 @@ export const adminGetUserById = asyncHandler(async (req: AuthedRequest, res: Res
 
   res.json({
     user: toUserDTO(user),
-    kyc: kyc
-      ? {
-          status: kyc.status,
-          paymentStatus: kyc.payment_status,
-          submittedAt: kyc.submitted_at,
-          dateOfBirth: kyc.date_of_birth,
-          phoneNumber: kyc.phone_number,
-          address: kyc.address,
-          city: kyc.city,
-          country: kyc.country,
-          postalCode: kyc.postal_code,
-          idDocument: kyc.id_document_url,
-          proofOfAddress: kyc.proof_of_address_url,
-        }
-      : null,
+    kyc: toKycDTO(kyc),
     applications: applicationsByType,
-    payments: payments || [],
-    referrals: referrals || [],
+    // The admin user-detail tabs read camelCase (`payment.createdAt`,
+    // `referral.fullName`, `referral.kycCompleted`), so map the raw rows.
+    payments: (payments || []).map(toPaymentDTO),
+    referrals: (referrals || []).map(toReferralUserDTO),
   });
 });
 

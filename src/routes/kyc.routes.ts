@@ -14,9 +14,13 @@ import {
 
 const router = Router();
 
+// `paymentScreenshot` belongs here too: step 3 of the KYC wizard posts the
+// membership payment proof to /api/kyc/save. Leaving it out of the field list
+// made multer reject the whole request with LIMIT_UNEXPECTED_FILE.
 const kycFileFields = upload.fields([
   { name: 'idDocument', maxCount: 1 },
   { name: 'proofOfAddress', maxCount: 1 },
+  { name: 'paymentScreenshot', maxCount: 1 },
 ]);
 
 router.post('/kyc/submit', requireAuth, kycFileFields, submitKyc);

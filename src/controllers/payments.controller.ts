@@ -4,34 +4,64 @@ import { supabase } from '../config/supabase';
 import { ApiError } from '../utils/ApiError';
 import { asyncHandler } from '../utils/asyncHandler';
 import { AuthedRequest } from '../middleware/auth';
+import { toPaymentDTO as mapPaymentRow } from '../utils/mappers';
+import { uploadFile } from '../utils/storage';
+import { STORAGE_BUCKETS } from '../config/supabase';
 
-// Note: the documented frontend contract (lib/api/payments.ts) only lists,
-// updates and deletes ledger rows — there is no public "create payment"
-// endpoint. Rows are expected to be inserted by whatever internal process
-// needs to log a balance change (e.g. a future referral-bonus credit or
-// manual admin adjustment done directly in Supabase); this controller
-// implements exactly the three documented endpoints, including the balance
-// math the frontend's PaymentRecord shape (previousBalance/newBalance/
-// processedAt) implies happens on approval.
 
-function mapPaymentRow(row: any) {
-  return {
-    id: row.id,
-    userId: row.user_id,
-    user: row.users
-      ? { id: row.user_id, email: row.users.email, fullName: row.users.full_name, balance: Number(row.users.balance) }
-      : null,
-    amount: Number(row.amount),
-    type: row.type,
-    paymentScreenshot: row.payment_screenshot_url,
-    paymentStatus: row.payment_status,
-    status: row.status,
-    previousBalance: row.previous_balance !== null ? Number(row.previous_balance) : null,
-    newBalance: row.new_balance !== null ? Number(row.new_balance) : null,
-    processedAt: row.processed_at,
-    createdAt: row.created_at,
-  };
-}
+// Ledger rows are created by the "Credit Balance" flow (the dashboard's credit
+// modal on web, CreditBalanceModal on native): the user transfers off-platform
+// and uploads a screenshot as proof. The row lands as pending/pending and only
+// touches users.balance once an admin flips it to completed via
+// PUT /api/admin/payments/:paymentId — that's where the balance math lives.
+
+const creditSchema = z.object({
+  amount: z.coerce.number().positive('Amount must be greater than 0'),
+  type: z.enum(['credit', 'debit']).default('credit'),
+  description: z.string().optional(),
+});
+
+export const createCreditRequest = asyncHandler(async (req: AuthedRequest, res: Response) => {
+  const parsed = creditSchema.safeParse(req.body);
+  if (!parsed.success) throw ApiError.badRequest(parsed.error.errors[0]?.message || 'Invalid input');
+
+  const screenshot = req.file;
+  if (!screenshot) throw ApiError.badRequest('paymentScreenshot is required');
+
+  const userId = req.user!.id;
+  const screenshotUrl = await uploadFile(STORAGE_BUCKETS.uploads, screenshot, `${userId}/payment-screenshots`);
+
+  const { data: created, error } = await supabase
+    .from('payments')
+    .insert({
+      user_id: userId,
+      amount: parsed.data.amount,
+      type: parsed.data.type,
+      description: parsed.data.description ?? 'Balance credit request',
+      payment_screenshot_url: screenshotUrl,
+      payment_status: 'pending',
+      status: 'pending',
+    })
+    .select('*, users(email, full_name, balance)')
+    .single();
+
+  if (error || !created) throw new ApiError(500, error?.message || 'Failed to record payment');
+
+  res.status(201).json({
+    message: 'Payment information submitted successfully. Your balance will be updated after verification.',
+    payment: mapPaymentRow(created),
+  });
+});
+
+export const getMyPayments = asyncHandler(async (req: AuthedRequest, res: Response) => {
+  const { data, error } = await supabase
+    .from('payments')
+    .select('*')
+    .eq('user_id', req.user!.id)
+    .order('created_at', { ascending: false });
+  if (error) throw new ApiError(500, error.message);
+  res.json({ payments: (data || []).map(mapPaymentRow) });
+});
 
 export const adminListPayments = asyncHandler(async (req: AuthedRequest, res: Response) => {
   const page = Number(req.query.page) || 1;
