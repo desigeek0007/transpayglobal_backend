@@ -1,3 +1,4 @@
+// Job posting and job application flows with resume uploads
 import { Response } from 'express';
 import { z } from 'zod';
 import { STORAGE_BUCKETS } from '../config/supabase';

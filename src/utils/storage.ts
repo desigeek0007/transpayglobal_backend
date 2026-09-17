@@ -1,3 +1,4 @@
+// Uploads files to Supabase storage and returns signed URLs
 import { randomUUID } from 'crypto';
 import { supabase } from '../config/supabase';
 import { ApiError } from './ApiError';

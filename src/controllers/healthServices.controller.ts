@@ -1,3 +1,4 @@
+// Doctor registration and patient consultancy application flows
 import { Response } from 'express';
 import { z } from 'zod';
 import { STORAGE_BUCKETS } from '../config/supabase';

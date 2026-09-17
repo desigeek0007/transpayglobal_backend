@@ -1,3 +1,4 @@
+// Registration, login, and token refresh for users
 import { Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { z } from 'zod';

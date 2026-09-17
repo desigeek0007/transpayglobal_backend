@@ -1,3 +1,4 @@
+// Express guard that verifies bearer tokens and attaches the user
 import { NextFunction, Request, Response } from 'express';
 import { verifyToken } from '../utils/jwt';
 import { ApiError } from '../utils/ApiError';

@@ -1,3 +1,4 @@
+// Logs frontend form submissions and lists them for admins
 import { Response } from 'express';
 import { z } from 'zod';
 import { supabase } from '../config/supabase';

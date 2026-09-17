@@ -1,3 +1,4 @@
+// Copy trading investment applications paid by card or crypto
 import { Response } from 'express';
 import { z } from 'zod';
 import { STORAGE_BUCKETS } from '../config/supabase';

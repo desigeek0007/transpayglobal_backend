@@ -1,3 +1,4 @@
+// Server-side Supabase client and storage bucket names
 import { createClient } from '@supabase/supabase-js';
 import { env } from './env';
 

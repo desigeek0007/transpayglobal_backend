@@ -1,3 +1,4 @@
+// Loan application submission, review, and admin management
 import { Response } from 'express';
 import { z } from 'zod';
 import { STORAGE_BUCKETS } from '../config/supabase';

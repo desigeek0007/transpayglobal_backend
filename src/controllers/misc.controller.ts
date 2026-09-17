@@ -1,3 +1,4 @@
+// Server-side reCAPTCHA verification protecting the contact form
 import { Request, Response } from 'express';
 
 // Mirrors the existing app/api/route.ts contract exactly: POST /api/ with a

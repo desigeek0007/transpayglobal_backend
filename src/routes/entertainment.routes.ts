@@ -1,8 +1,10 @@
 import { Router } from 'express';
-import { submitEntertainmentRequest } from '../controllers/entertainment.controller';
+import { requireAuth } from '../middleware/auth';
+import { submitEntertainmentRequest, getMyEntertainmentRequests } from '../controllers/entertainment.controller';
 
 const router = Router();
 
-router.post('/entertainment', submitEntertainmentRequest);
+router.post('/entertainment', requireAuth, submitEntertainmentRequest);
+router.get('/entertainment/my', requireAuth, getMyEntertainmentRequests);
 
 export default router;

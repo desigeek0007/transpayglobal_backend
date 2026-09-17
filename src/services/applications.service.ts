@@ -1,3 +1,4 @@
+// Shared persistence for all admin-reviewed application flows
 // Generic persistence for the many "submit a form, get reviewed by an admin"
 // flows across the platform (loan applications, job postings/applications,
 // lawyer/case registrations, doctor registrations, patient consultancies,

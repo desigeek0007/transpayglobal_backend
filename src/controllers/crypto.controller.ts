@@ -1,3 +1,4 @@
+// Proxies CoinGecko price lookups with short-lived in-memory caching
 import { Request, Response } from 'express';
 import { asyncHandler } from '../utils/asyncHandler';
 

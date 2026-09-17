@@ -1,3 +1,4 @@
+// Express app configuration, middleware, and route registration
 import express from 'express';
 import cors from 'cors';
 import helmet from 'helmet';

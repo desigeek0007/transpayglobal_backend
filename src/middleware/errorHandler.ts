@@ -1,3 +1,4 @@
+// Central 404 and error responses for the Express app
 import { NextFunction, Request, Response } from 'express';
 import { ApiError } from '../utils/ApiError';
 

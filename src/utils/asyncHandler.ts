@@ -1,3 +1,4 @@
+// Wraps async route handlers so rejected promises reach the error handler
 import { NextFunction, Request, Response } from 'express';
 
 type AsyncRouteHandler = (req: Request, res: Response, next: NextFunction) => Promise<any>;

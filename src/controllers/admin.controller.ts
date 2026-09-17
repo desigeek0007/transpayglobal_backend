@@ -1,3 +1,4 @@
+// Admin-only endpoints for users, payments, and applications
 import { Response } from 'express';
 import { supabase } from '../config/supabase';
 import { ApiError } from '../utils/ApiError';

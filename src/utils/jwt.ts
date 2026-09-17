@@ -1,3 +1,4 @@
+// Signs and verifies JWT access tokens for authenticated users
 import jwt from 'jsonwebtoken';
 import { env } from '../config/env';
 

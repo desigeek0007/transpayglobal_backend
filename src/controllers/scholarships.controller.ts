@@ -1,3 +1,4 @@
+// Scholarship unlock and course enrollment application flows
 import { Response } from 'express';
 import { z } from 'zod';
 import { STORAGE_BUCKETS } from '../config/supabase';

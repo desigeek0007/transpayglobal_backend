@@ -1,3 +1,4 @@
+// In-app support chat for authenticated users and guest emails
 import { Response } from 'express';
 import { z } from 'zod';
 import { supabase } from '../config/supabase';

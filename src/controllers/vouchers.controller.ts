@@ -1,3 +1,4 @@
+// Voucher application submission, listing, and status for users
 import { Response } from 'express';
 import { z } from 'zod';
 import { supabase } from '../config/supabase';

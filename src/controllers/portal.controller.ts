@@ -1,3 +1,4 @@
+// Logged-in user dashboard with KYC gate and activity stats
 import { Response } from 'express';
 import { supabase } from '../config/supabase';
 import { ApiError } from '../utils/ApiError';

@@ -1,3 +1,4 @@
+// KYC verification workflow with status normalization for the admin UI
 import { Response } from 'express';
 import { z } from 'zod';
 import { supabase } from '../config/supabase';

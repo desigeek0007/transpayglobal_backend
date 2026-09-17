@@ -1,3 +1,4 @@
+// Loads and validates environment variables for the backend
 import dotenv from 'dotenv';
 
 dotenv.config();

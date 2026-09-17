@@ -1,3 +1,4 @@
+// Boots the Express app and starts the HTTP server
 import { app } from './app';
 import { env } from './config/env';
 
